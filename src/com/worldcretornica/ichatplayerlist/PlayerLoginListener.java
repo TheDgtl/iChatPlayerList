@@ -1,110 +1,86 @@
 package com.worldcretornica.ichatplayerlist;
 
-import net.TheDgtl.iChat.iChat;
-
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerListener;
 
-public class PlayerLoginListener extends PlayerListener {
-
+public class PlayerLoginListener implements Listener {
 	public static iChatPlayerList plugin;
 	
-	public PlayerLoginListener(iChatPlayerList instance)
-	{
+	public PlayerLoginListener(iChatPlayerList instance) {
 		plugin = instance;
 	}
 	
-	@Override
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerChat(PlayerChatEvent event) {
-		
 		Player player = event.getPlayer();
-		addPlayerToList(player);				
-		
-		super.onPlayerChat(event);
+		addPlayerToList(player);
 	}
 	
-	@Override
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		
 		Player player = event.getPlayer();
 		addPlayerToList(player);
-		
-		super.onPlayerJoin(event);
 	}
 	
 	
-	public void addPlayerToList(Player player)
-	{
-		((iChat) plugin.ichatplugin).info.addPlayer(player);
-		
-		if(((iChat) plugin.ichatplugin).info.getKey(player, "prefix") == null)
-		{
-			plugin.logger.severe("Unable to get prefix");
-		}else{
-			String prefix = ((iChat) plugin.ichatplugin).info.getKey(player, "prefix");
+	public void addPlayerToList(Player player) {
+		plugin.ichat.info.addPlayer(player);
+		String prefix = plugin.ichat.info.getKey(player, "prefix");
+		if(prefix != null && prefix.lastIndexOf("&") != -1) {
+			int lastcolor = prefix.lastIndexOf("&");
 			
-			if(prefix.lastIndexOf("&") != -1)
-			{
-				int lastcolor = prefix.lastIndexOf("&");
-				
-				String coloredname = "&" + prefix.charAt(lastcolor + 1) + player.getName();
-				String tabname = coloredname;
-				
-				if(plugin.mainconfig.getBoolean("ShowInTAB"))
-				{
-					tabname = checkOP(tabname, player);
-					tabname = ((iChat) plugin.ichatplugin).API.addColor(tabname);
-					if (tabname.length()>16)
-						player.setPlayerListName(tabname.substring(0, 14) + "..");
-					else
-						player.setPlayerListName(tabname);
+			String coloredname = "&" + prefix.charAt(lastcolor + 1) + player.getName();
+			String tabname = coloredname;
+			
+			if(plugin.ShowInTAB) {
+				tabname = checkOP(tabname, player);
+				tabname = plugin.ichat.API.addColor(tabname);
+				if (tabname.length()>16) {
+					player.setPlayerListName(tabname.substring(0, 14) + "..");
+				} else {
+					player.setPlayerListName(tabname);
 				}
-				if(plugin.mainconfig.getBoolean("ShowInDisplayName"))
-				{
-					coloredname = checkOP(coloredname, player);
-					coloredname = ((iChat) plugin.ichatplugin).API.addColor(coloredname);
-					player.setDisplayName(coloredname);
-				}				
+			}
+			if(plugin.ShowInDisplayName) {
+				coloredname = checkOP(coloredname, player);
+				coloredname = plugin.ichat.API.addColor(coloredname);
+				player.setDisplayName(coloredname);
 			}
 		}
 	}
 	
-	public String checkOP(String name, Player player)
-	{
-		if(plugin.mainconfig.getBoolean("ShowStatusOP"))
-		{
-			if(player.isOp())
-			{
-				name = plugin.mainconfig.getString("OPSymbol") + name;
+	public String checkOP(String name, Player player) {
+		if(plugin.ShowStatusOP) {
+			if(player.isOp()) {
+				name = plugin.OPSymbol + name;
 				
-				if(plugin.mainconfig.getBoolean("ShowBothStatus"))
-				{
+				if(plugin.ShowBothStatus) {
 					name = checkCreative(name, player);
 				}
-			}else{
+			} else {
 				name = checkCreative(name, player);
 			}
 			
 			return name;
-		}else{
+		} else {
 			return checkCreative(name, player);
 		}
 	}
 	
-	public String checkCreative(String name, Player player)
-	{
-		if(plugin.mainconfig.getBoolean("ShowStatusCreative"))
-		{
-			if(player.getGameMode() == GameMode.CREATIVE)
-			{
-				name = plugin.mainconfig.getString("CreativeSymbol") + name;
+	public String checkCreative(String name, Player player) {
+		if(plugin.ShowStatusCreative) {
+			if(player.getGameMode() == GameMode.CREATIVE) {
+				name = plugin.CreativeSymbol + name;
 			}
 			
 			return name;
-		}else{
+		} else {
 			return name;
 		}
 	}
